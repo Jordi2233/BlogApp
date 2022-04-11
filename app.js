@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const https = require("https");
 const _ = require("lodash");
+const mongoose = require("mongoose");
 
 const homeStartingContent = "I'm baby yuccie gluten-free vice, meditation swag kickstarter kogi pug fanny pack DIY. Slow-carb snackwave tacos kale chips bicycle rights squid. IPhone leggings venmo meggings snackwave four loko bushwick. PBR&B hammock gluten-free selvage, copper mug kickstarter quinoa af sartorial trust fund banjo banh mi actually. Photo booth beard microdosing flannel portland. Kogi keffiyeh crucifix messenger bag af readymade poke food truck, tumeric raw denim typewriter kinfolk prism subway tile.";
 const aboutContent = "Bushwick migas actually meditation tote bag direct trade. Ethical ramps hashtag sartorial taiyaki keytar adaptogen everyday carry la croix raclette. Poke shaman chartreuse cardigan tote bag fam. Glossier hammock fanny pack selvage, truffaut four loko godard flexitarian brooklyn artisan. Cred blue bottle pour-over YOLO drinking vinegar health goth keffiyeh fashion axe schlitz you probably haven't heard of them hexagon. Trust fund gochujang hammock, fixie sriracha hashtag banjo green juice +1.";
@@ -12,7 +13,24 @@ const contactContent = "Air plant twee hammock whatever beard, pok pok tbh liter
 
 const app = express();
 
-let posts = [];
+
+// *****************************************************************************
+// Mongoose section
+const uri = "mongodb+srv://User:hellDb23@hell.tm4nl.mongodb.net/blogDB?retryWrites=true&w=majority";
+
+// connect to db via uri
+mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
+
+const postSchema = {
+    title: String,
+    content: String
+}
+
+const Post = mongoose.model("Post", postSchema);
+
 
 // *****************************************************************************
 // use and set section
@@ -29,10 +47,15 @@ app.use(express.static("public"));
 // Get section
 
 app.get("/", function (req, res) {
-    res.render("home", {
-        homeStartingContent: homeStartingContent,
-        posts: posts
-    });
+
+    Post.find({}, (err, foundPosts) => {
+        res.render("home", {
+            homeStartingContent: homeStartingContent,
+            posts: foundPosts
+        });
+    })
+
+
 });
 
 app.get("/about", function (req, res) {
@@ -53,29 +76,46 @@ app.get("/compose", function (req, res) {
 
 app.get("/posts/:postName", function (req, res) {
 
-    const reqTitle = _.lowerCase(req.params.postName);
+    const reqTitle = req.params.postName;
 
-    posts.forEach(function (post) {
-        const storedTitle = _.lowerCase(post.title);
-
-        if (reqTitle === storedTitle) {
+    Post.findOne({
+        title: reqTitle
+    }, (err, foundPosts) => {
+        if (err) {
+            console.log(err);
+        } else {
             res.render("post", {
-                postTitle: post.title,
-                postContent: post.content
+                postTitle: foundPosts.title,
+                postContent: foundPosts.content
             });
         }
-    })
+    });
+
+    // posts.forEach(function (post) {
+    //     const storedTitle = _.lowerCase(post.title);
+
+    //     if (reqTitle === storedTitle) {
+    //         res.render("post", {
+    //             postTitle: post.title,
+    //             postContent: post.content
+    //         });
+    //     }
+    // })
 });
 
 // *****************************************************************************
 // Post section
 
 app.post("/compose", function (req, res) {
-    const newPost = {
+    const postTitle = req.body.newTitle;
+    const postContent = req.body.newText;
+
+    const post = new Post({
         title: req.body.newTitle,
-        content: req.body.newText
-    }
-    posts.push(newPost);
+        content: postContent
+    })
+
+    post.save();
 
     res.redirect("/");
 });
