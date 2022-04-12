@@ -67,7 +67,7 @@ form {
     width: 70vw;
 }
 
-form input,
+form 
 textarea {
     width: -webkit-fill-available;
 }
@@ -75,4 +75,9 @@ textarea {
 form p {
     margin-bottom: 0;
     margin-top: 1.5rem;
+}
+
+    .checkbox {
+        height: 20px;
+        width:  20px;
 }
