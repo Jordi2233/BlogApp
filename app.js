@@ -1,5 +1,5 @@
-// variables section
-
+// Require section
+require('dotenv').config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
@@ -18,14 +18,16 @@ const app = express();
 
 
 // *****************************************************************************
-// Mongoose section
-const uri = "mongodb+srv://User:hellDb23@hell.tm4nl.mongodb.net/blogDB?retryWrites=true&w=majority";
 
 // connect to db via uri
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+const mongoConnect = async () => {
+    mongoose.connect(process.env.URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    }, () => {
+        console.log("Connected correctly to server");
+    });
+}
 
 const postSchema = {
     title: String,
@@ -49,6 +51,9 @@ app.use(express.static("public"));
 // *****************************************************************************
 // Get section
 
+const run = async () => {
+    try {
+        await mongoConnect();
 app.get("/", (req, res) => {
 
     Post.find({}, (err, foundPosts) => {
@@ -149,6 +154,21 @@ app.post("/delete", (req, res) => {
 // *****************************************************************************
 // Listen section
 
-app.listen(3000, function () {
-    console.log("Server started on port 3000");
+
+let port = process.env.PORT;
+if (port == null || port == "") {
+  port = 3000;
+}
+
+
+app.listen(port, () => {
+  console.log("Server started successfully");
 });
+    }
+    catch (err) {
+        console.log(err)
+    }
+
+}
+
+run().catch(console.dir);
